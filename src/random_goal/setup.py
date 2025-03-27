@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'state_pubsub'
+package_name = 'random_goal'
 
 setup(
     name=package_name,
@@ -14,14 +14,13 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='matthewchen132',
-    maintainer_email='matthewchen132@todo.todo',
+    maintainer_email='matthewchen132@gmail.com',
     description='TODO: Package description',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-		'6_state_publisher = state_pubsub.state_publisher:main',
-                '6_state_subscriber = state_pubsub.state_subscriber:main',
+			' test = random_goal.random_goal:main',
         ],
     },
 )

@@ -20,7 +20,8 @@ class StatePublisher(Node):
         u = round(np.random.random(),3)
         v = round(np.random.random(),3)
         w = round(np.random.random(),3)
-        msg.data = [x, y, z, u, v, w]
+        yaw = round(np.random.random(),3)
+        msg.data = [x, y, z, u, v, w, yaw]
         self.states.publish(msg)
         self.get_logger().info(f"{msg.data}")
 

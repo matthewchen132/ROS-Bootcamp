@@ -1,33 +1,26 @@
 import rclpy
 from rclpy.node import Node
-
-from tutorial_interfaces.msg import Num                        # CHANGE
-
+from std_msgs.msg import Float64MultiArray, Float64
 
 class StateSubscriber(Node):
-
     def __init__(self):
         super().__init__('minimal_subscriber')
-        self.subscription = self.create_subscription(
-            Num,                              # Change Num -> state from turtlebot
-					      # Use getter?
-            'topic',
-            self.listener_callback,
-            10)
+        self.subscription = self.create_subscription(Float64MultiArray,'State',self.listener_callback, 10)
         self.subscription
-
     def listener_callback(self, msg):
-        self.get_logger().info('State from Turtlebot: "%d"' % msg.num)  # CHANGE
-
+        x = msg.data[0]
+        y = msg.data[1]
+        z = msg.data[2]
+        x_vel = msg.data[3]
+        y_vel = msg.data[4]
+        z_vel = msg.data[5]
+        self.get_logger().info(f'States recieved: :{[x, y, z, x_vel, y_vel, z_vel]}')  # CHANGE
 
 def main(args=None):
     rclpy.init(args=args)
-
-    minimal_subscriber = MinimalSubscriber()
-
-    rclpy.spin(minimal_subscriber)
-
-    minimal_subscriber.destroy_node()
+    subscriber = StateSubscriber()
+    rclpy.spin(subscriber)
+    subscriber.destroy_node()
     rclpy.shutdown()
 
 
