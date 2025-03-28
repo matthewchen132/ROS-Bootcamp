@@ -23,11 +23,15 @@ class velocityPublisher(Node): # node that has a publisher to publish velocities
         self.integral_error_approach = 0.0
         self.position_reached = False
         self.angle_reached = False
-
+        self.prev_error_approach = 0.0
         #goal
         self.x_goal = 10*np.random.random()
         self.y_goal = 10*np.random.random()
         self.theta_goal = 2*pi*np.random.random()
+        # Worst case testing, going from opposite corner and having to flip maximum angle from approach
+            # self.x_goal = 0
+            # self.y_goal = 0
+            # self.theta_goal = 7*pi/4
         self.get_logger().info(f"Goal (x,y, theta): {self.x_goal, self.y_goal, math.degrees(self.theta_goal)}")
 
         # timer
@@ -35,7 +39,7 @@ class velocityPublisher(Node): # node that has a publisher to publish velocities
         self.timer = self.create_timer(self.loop_delay, self.timer_callback)
         
         # creates a new goal / status update every 10 seconds
-        self.generate_goal = self.create_timer(8, self.generate_new_goal)
+        self.generate_goal = self.create_timer(10, self.generate_new_goal)
 
         #loop timer
         self.new_goal_time = None
@@ -65,7 +69,7 @@ class velocityPublisher(Node): # node that has a publisher to publish velocities
             self.get_logger().info(f"Angular goal reached!")
         #print errors
         self.get_logger().info(f"Distance error:{sqrt((self.x_goal-self.x_current)**2+(self.y_goal-self.y_current)**2)}")
-        self.get_logger().info(f"Angular error (degrees):{math.degrees(abs(self.theta_goal-self.theta_current))}")
+        self.get_logger().info(f"Angular error (degrees):{math.degrees(abs(normalize_angle(self.theta_goal)-normalize_angle(self.theta_current)))}")
         self.get_logger().info("\n\n")
         # resets the signals
         self.position_reached = False
@@ -73,6 +77,11 @@ class velocityPublisher(Node): # node that has a publisher to publish velocities
         self.x_goal =  10*np.random.random()
         self.y_goal =  10*np.random.random()
         self.theta_goal =  2*pi*np.random.random()
+        # Worst case testing, going from opposite corner and having to flip maximum angle from approach
+            # self.x_goal = 10
+            # self.y_goal = 10
+            # self.theta_goal = 5*pi/4
+
         self.get_logger().info(f"New Goal Generated(x,y, theta): {self.x_goal, self.y_goal, math.degrees(self.theta_goal)}")
 
 
@@ -91,17 +100,22 @@ class velocityPublisher(Node): # node that has a publisher to publish velocities
     
         # start commanding linear and angular velocity
         # PD control for approach angle
-        error_approach =normalize_angle(theta_approach)-normalize_angle(self.theta_current)
-        move_turtle.angular.z = 3*(error_approach) + 0.04*error_approach/self.loop_delay # PD control prevents overshoot
+        error_approach = normalize_angle(theta_approach)-normalize_angle(self.theta_current)
+        d_error_approach = (error_approach - self.prev_error_approach)/self.loop_delay
+        self.prev_error_approach = error_approach
+        move_turtle.angular.z = 5*(error_approach) + 0.004*d_error_approach # PD control prevents overshoot
         move_turtle.linear.x = 2.0*distance_to_goal 
-        if distance_to_goal < 0.04:
+        if distance_to_goal < 0.05:
             # if close enough, stop moving, and start rotating until we reach the goal.
+            if math.degrees(abs(self.theta_goal - self.theta_current)) < 30:
+                #implement Integral control when closeer to the goal
+                self.integral_error_approach += (normalize_angle(self.theta_goal)-normalize_angle(self.theta_current))*self.loop_delay
             move_turtle.linear.x = 0.0
-            move_turtle.angular.z = 8*(normalize_angle(self.theta_goal)-normalize_angle(self.theta_current))
+            move_turtle.angular.z = 8*(normalize_angle(self.theta_goal)-normalize_angle(self.theta_current)) # +5*self.integral_error_approach
             self.position_reached = True
 
 
-            if math.degrees(abs(self.theta_goal-self.theta_current)) < 1 or  (360 - math.degrees(abs(self.theta_goal-self.theta_current)) < 1):
+            if math.degrees(abs(self.theta_goal-self.theta_current)) < 1:
             # if the angle becomes close enough, stop moving, angular goal is reached.
                 self.angle_reached = True
                 move_turtle.angular.z = 0.0
@@ -110,11 +124,7 @@ class velocityPublisher(Node): # node that has a publisher to publish velocities
         self.publish_velocity.publish(move_turtle)
 
 def normalize_angle(angle_rads):
-        if angle_rads > pi:
-            angle_rads -= 2*pi
-        elif angle_rads < -pi:
-            angle_rads += 2*pi
-        return angle_rads
+    return (angle_rads + pi) % (2*pi) - pi
 
 def main(args=None):
     rclpy.init(args=args)
