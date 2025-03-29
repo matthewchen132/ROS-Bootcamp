@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
 			' test = random_goal.random_goal:main',
+			' clean = random_goal.cleaning_script:main'
         ],
     },
 )
