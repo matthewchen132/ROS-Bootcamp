@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'random_goal'
+package_name = 'turtlebot_waypoints'
 
 setup(
     name=package_name,
@@ -20,8 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-			' test = random_goal.random_goal:main',
-			' clean = random_goal.cleaning_script:main'
+            'turtlebot_waypoints = turtlebot_waypoints.turtlebot_waypoints:main',
+	    'random_goal = turtlebot_waypoints.random_goal:main'
         ],
     },
 )
